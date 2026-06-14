@@ -331,8 +331,13 @@ Enabled: Y
 */
 myFunc.flipMatrix = LAMBDA(matrix, [dft_lr_1lr_2ud],
     LET(
+        dir, IF(
+            ISOMITTED(dft_lr_1lr_2ud),
+            1,
+            dft_lr_1lr_2ud
+        ),
         order, IF(
-            dft_lr_1lr_2ud = 2,
+            dir = 2,
             SEQUENCE(ROWS(matrix)),
             SEQUENCE(1, COLUMNS(matrix))
         ),
@@ -416,13 +421,6 @@ myFunc.strHash = LAMBDA(text, [length_default9],
             9,
             length_default9
         ),
-        chars, MID(
-            text,
-            SEQUENCE(LEN(text)),
-            1
-        ),
-        unicodes, UNICODE(chars),
-        hashSum, 0,
         iterator, SEQUENCE(LEN(text)),
         rollingHash, REDUCE(
             0,
@@ -633,7 +631,7 @@ myFunc.RegexFilter = LAMBDA(
 No: 23
 Name: myFunc.Calendar
 Description: 接收开始日期与完成日期两个参数，生成完整日历表
-Category: Calenar
+Category: Calendar
 Enabled: Y
 */
 myFunc.Calendar = LAMBDA(startDate, endDate,

@@ -14,6 +14,9 @@ Option Explicit
 ' - Silently exits if the source file does not exist or no definitions are found
 ' - Existing same-name workbook names are overwritten
 
+' Source file path. Change here if the definitions file is stored elsewhere.
+Private Const LAMBDA_SOURCE_PATH As String = "D:\05_Coding test\excel_lambda\LambdaDefinitions.txt"
+
 Public Sub LoadLambdaDefinitionsFromFile()
 
     Dim filePath As String
@@ -27,7 +30,7 @@ Public Sub LoadLambdaDefinitionsFromFile()
     On Error GoTo CleanExit
 
     Set wb = ActiveWorkbook
-    filePath = "C:\Users\siriu\LambdaDefinitions.txt"
+    filePath = LAMBDA_SOURCE_PATH
 
     If Dir(filePath) = "" Then GoTo CleanExit
 
@@ -102,29 +105,26 @@ End Function
 Private Function RemoveBlockComments(ByVal txt As String) As String
 
     Dim result As String
-    Dim i As Long
-    Dim n As Long
-    Dim inComment As Boolean
-    Dim ch2 As String
+    Dim startPos As Long
+    Dim openPos As Long
+    Dim closePos As Long
 
-    n = Len(txt)
-    i = 1
+    startPos = 1
 
-    Do While i <= n
+    Do
+        openPos = InStr(startPos, txt, "/*")
 
-        ch2 = Mid$(txt, i, 2)
-
-        If Not inComment And ch2 = "/*" Then
-            inComment = True
-            i = i + 2
-        ElseIf inComment And ch2 = "*/" Then
-            inComment = False
-            i = i + 2
-        Else
-            If Not inComment Then result = result & Mid$(txt, i, 1)
-            i = i + 1
+        If openPos = 0 Then
+            result = result & Mid$(txt, startPos)
+            Exit Do
         End If
 
+        result = result & Mid$(txt, startPos, openPos - startPos)
+
+        closePos = InStr(openPos + 2, txt, "*/")
+        If closePos = 0 Then Exit Do   ' Unterminated comment: drop the remainder.
+
+        startPos = closePos + 2
     Loop
 
     RemoveBlockComments = result
