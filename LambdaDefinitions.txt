@@ -679,3 +679,139 @@ myFunc.Calendar = LAMBDA(startDate, endDate,
         )
     )
 );
+
+/*
+No: 24
+Name: myFunc.unpivot
+Description: 逆透视(宽表转长表)。参数1含表头的表格；参数2列名列表；参数3默认FALSE逆透视未列出的其它列(参数2为保留列)，TRUE逆透视参数2列出的列；参数4/5自定义属性列与值列标题；参数6默认FALSE过滤空值行，TRUE保留空值行(空值显示为空白而非0)
+Category: Table
+Enabled: Y
+*/
+myFunc.unpivot = LAMBDA(table, col_names, [unpivot_selected], [attribute_name], [value_name], [keep_empty],
+    LET(
+        sel, IF(ISOMITTED(unpivot_selected), FALSE, unpivot_selected),
+        keepEmpty, IF(
+            ISOMITTED(keep_empty),
+            FALSE,
+            keep_empty
+        ),
+        attrName, IF(
+            ISOMITTED(attribute_name),
+            "Attribute",
+            attribute_name
+        ),
+        valName, IF(
+            ISOMITTED(value_name),
+            "Value",
+            value_name
+        ),
+        headers, CHOOSEROWS(table, 1),
+        data, DROP(table, 1),
+        nCols, COLUMNS(table),
+        m, ROWS(data),
+        colSeq, SEQUENCE(1, nCols),
+        blankMask, (data = ""),
+        inList, ISNUMBER(
+            XMATCH(headers, col_names)
+        ),
+        isUnpivot, IF(sel, inList, NOT(inList)),
+        nVal, SUM(--isUnpivot),
+        nKeep, nCols - nVal,
+        IF(
+            nVal = 0,
+            "没有可逆透视的列",
+            LET(
+                valCols, FILTER(colSeq, isUnpivot),
+                nOut, m * nVal,
+                srcRowIdx, INT(
+                    (SEQUENCE(nOut) - 1) / nVal
+                ) + 1,
+                valPosIdx, MOD(
+                    SEQUENCE(nOut) - 1,
+                    nVal
+                ) + 1,
+                attrColIdx, INDEX(
+                    valCols,
+                    1,
+                    valPosIdx
+                ),
+                attrBlock, INDEX(
+                    headers,
+                    1,
+                    attrColIdx
+                ),
+                valRaw, INDEX(
+                    data,
+                    srcRowIdx,
+                    attrColIdx
+                ),
+                valIsBlank, INDEX(
+                    blankMask,
+                    srcRowIdx,
+                    attrColIdx
+                ),
+                valBlock, IF(valIsBlank, "", valRaw),
+                keepRow, IF(
+                    keepEmpty,
+                    SEQUENCE(nOut) > 0,
+                    NOT(valIsBlank)
+                ),
+                nKept, SUM(--keepRow),
+                body, IF(
+                    nKeep = 0,
+                    HSTACK(attrBlock, valBlock),
+                    LET(
+                        keepCols, FILTER(
+                            colSeq,
+                            NOT(isUnpivot)
+                        ),
+                        keepRaw, INDEX(
+                            data,
+                            srcRowIdx,
+                            keepCols
+                        ),
+                        keepIsBlank, INDEX(
+                            blankMask,
+                            srcRowIdx,
+                            keepCols
+                        ),
+                        keepBlock, IF(
+                            keepIsBlank,
+                            "",
+                            keepRaw
+                        ),
+                        HSTACK(
+                            keepBlock,
+                            attrBlock,
+                            valBlock
+                        )
+                    )
+                ),
+                headerRow, IF(
+                    nKeep = 0,
+                    HSTACK(attrName, valName),
+                    HSTACK(
+                        INDEX(
+                            headers,
+                            1,
+                            FILTER(
+                                colSeq,
+                                NOT(isUnpivot)
+                            )
+                        ),
+                        attrName,
+                        valName
+                    )
+                ),
+                IF(
+                    nKept = 0,
+                    "没有非空数据",
+                    VSTACK(
+                        headerRow,
+                        FILTER(body, keepRow)
+                    )
+                )
+            )
+        )
+    )
+);
