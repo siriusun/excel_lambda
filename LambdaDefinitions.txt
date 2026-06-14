@@ -1,0 +1,683 @@
+/*
+No: 1
+Name: myFunc.isin
+Description: 判断目标是否在列表中，返回1，0
+Category: Lookup
+Enabled: Y
+*/
+myFunc.isin = LAMBDA(value, array,
+    N(
+        ISNUMBER(
+            XMATCH(
+                "t" & value,
+                "t" & TRIMRANGE(array)
+            )
+        )
+    )
+);
+
+/*
+No: 2
+Name: myFunc.getHC
+Description: 获取流水线大号, 非流水线第二参数0返回空，1返回原号码，兼容H开头
+Category: Serial
+Enabled: Y
+*/
+myFunc.getHC = LAMBDA(father_sn, [return_0Null_1Origin],
+    IF(
+        REGEXTEST(
+            father_sn,
+            "^H?167[0-9]{8}.[0-9]{3}$"
+        ),
+        IF(
+            ISNUMBER(FIND("-", father_sn)),
+            "H" & RIGHT(father_sn, 3),
+            "H0" & RIGHT(father_sn, 2)
+        ),
+        IF(
+            OR(
+                return_0Null_1Origin = 0,
+                ISOMITTED(
+                    return_0Null_1Origin
+                )
+            ),
+            "",
+            father_sn
+        )
+    )
+);
+
+/*
+No: 3
+Name: myFunc.listDiff
+Description: 获取两个列表的差异，列表1排除列表2中内容
+Category: List
+Enabled: Y
+*/
+myFunc.listDiff = LAMBDA(list1, list2,
+    FILTER(
+        list1,
+        ISNA(XMATCH(list1, list2, 0, 1))
+    )
+);
+
+/*
+No: 4
+Name: myFunc.getPath
+Description: 获取当前工作薄路径
+Category: File
+Enabled: Y
+*/
+myFunc.getPath = LAMBDA(
+    LET(
+        file_fullname, CELL("filename"),
+        LEFT(
+            file_fullname,
+            FIND("[", file_fullname) - 1
+        )
+    )
+);
+
+/*
+No: 5
+Name: myFunc.getWeek
+Description: 获取目标日期的周一与周日的格式文本 yyyy/mm/dd - mm/dd
+Category: Date
+Enabled: Y
+*/
+myFunc.getWeek = LAMBDA(date,
+    LET(
+        week_start, date -
+            WEEKDAY(date, 2),
+        TEXT(
+            week_start + 1,
+            "yyyy/mm/dd"
+        ) & "-" &
+            TEXT(week_start + 7, "mm/dd")
+    )
+);
+
+/*
+No: 6
+Name: myFunc.findAny
+Description: 在一个文本中查找多个关键词(区分大小写)，找到任何一个返回1
+Category: Search
+Enabled: Y
+*/
+myFunc.findAny = LAMBDA(find_text_array, within_text,
+    N(
+        OR(
+            ISNUMBER(
+                FIND(
+                    find_text_array,
+                    within_text
+                )
+            )
+        )
+    )
+);
+
+/*
+No: 7
+Name: myFunc.findMatrix
+Description: 在一列中查找多个关键词，每行任何结果返回TRUE筛选目标区域，所有数组参数纵向
+Category: Search
+Enabled: Y
+*/
+myFunc.findMatrix = LAMBDA(
+    array_to_filter,
+    to_find_text_array,
+    within_text_arrary,
+    FILTER(
+        array_to_filter,
+        BYROW(
+            ISNUMBER(
+                FIND(
+                    TRANSPOSE(
+                        to_find_text_array
+                    ),
+                    within_text_arrary
+                )
+            ),
+            LAMBDA(row, OR(row))
+        )
+    )
+);
+
+/*
+No: 8
+Name: myFunc.replaceMap
+Description: 对一个文本进行对照翻译，列表1 => 列表2映射
+Category: Text
+Enabled: Y
+*/
+myFunc.replaceMap = LAMBDA(text, oldArray, newArray,
+    LET(
+        oldCount, COUNTA(oldArray),
+        seq, SEQUENCE(oldCount),
+        REDUCE(
+            text,
+            seq,
+            LAMBDA(result, idx,
+                SUBSTITUTE(
+                    result,
+                    INDEX(oldArray, idx),
+                    INDEX(newArray, idx)
+                )
+            )
+        )
+    )
+);
+
+/*
+No: 9
+Name: myFunc.Reverse
+Description: 把一个文本按字符逆序
+Category: Text
+Enabled: Y
+*/
+myFunc.Reverse = LAMBDA(text_to_reverse,
+    LET(
+        length, LEN(text_to_reverse),
+        CONCAT(
+            MID(
+                text_to_reverse,
+                SEQUENCE(
+                    length,
+                    1,
+                    length,
+                    -1
+                ),
+                1
+            )
+        )
+    )
+);
+
+/*
+No: 10
+Name: myFunc.searchAny
+Description: 在一个文本中查找多个关键词(不区分大小写)，找到任何一个返回1
+Category: Search
+Enabled: Y
+*/
+myFunc.searchAny = LAMBDA(find_text_array, within_text,
+    N(
+        OR(
+            ISNUMBER(
+                SEARCH(
+                    find_text_array,
+                    within_text
+                )
+            )
+        )
+    )
+);
+
+/*
+No: 11
+Name: myFunc.isHemoCELL
+Description: 检验是否为HemoCELL序列号，兼容H开头
+Category: Validation
+Enabled: Y
+*/
+myFunc.isHemoCELL = LAMBDA(serial_num,
+    N(
+        REGEXTEST(
+            serial_num,
+            "^H?167[0-9]{8}.[0-9]{3}$"
+        )
+    )
+);
+
+/*
+No: 12
+Name: myFunc.listdiff_super
+Description: 从列表1中排除掉后面9个列表的元素
+Category: List
+Enabled: Y
+*/
+myFunc.listdiff_super = LAMBDA(
+    baseList,
+    list1,
+    [list2],
+    [list3],
+    [list4],
+    [list5],
+    [list6],
+    [list7],
+    [list8],
+    [list9],
+    LET(
+        combinedList, VSTACK(
+            list1,
+            IF(
+                ISOMITTED(list2),
+                "",
+                list2
+            ),
+            IF(
+                ISOMITTED(list3),
+                "",
+                list3
+            ),
+            IF(
+                ISOMITTED(list4),
+                "",
+                list4
+            ),
+            IF(
+                ISOMITTED(list5),
+                "",
+                list5
+            ),
+            IF(
+                ISOMITTED(list6),
+                "",
+                list6
+            ),
+            IF(
+                ISOMITTED(list7),
+                "",
+                list7
+            ),
+            IF(
+                ISOMITTED(list8),
+                "",
+                list8
+            ),
+            IF(ISOMITTED(list9), "", list9)
+        ),
+        uniqueList, UNIQUE(combinedList),
+        result, FILTER(
+            baseList,
+            ISNA(
+                MATCH(
+                    baseList,
+                    uniqueList,
+                    0
+                )
+            )
+        ),
+        result
+    )
+);
+
+/*
+No: 13
+Name: myFunc.flipArray
+Description: 镜像反转一维数组，一行或一列均可
+Category: Array
+Enabled: Y
+*/
+myFunc.flipArray = LAMBDA(one_dimension_arr,
+    LET(
+        arr, one_dimension_arr,
+        order, MAKEARRAY(
+            ROWS(arr),
+            COLUMNS(arr),
+            LAMBDA(x, y, x * y)
+        ),
+        SORTBY(arr, order, -1)
+    )
+);
+
+/*
+No: 14
+Name: myFunc.flipMatrix
+Description: 镜像反转矩阵，第二参数：1左右，2上下
+Category: Array
+Enabled: Y
+*/
+myFunc.flipMatrix = LAMBDA(matrix, [dft_lr_1lr_2ud],
+    LET(
+        order, IF(
+            dft_lr_1lr_2ud = 2,
+            SEQUENCE(ROWS(matrix)),
+            SEQUENCE(1, COLUMNS(matrix))
+        ),
+        rlt, SORTBY(matrix, order, -1),
+        rlt
+    )
+);
+
+/*
+No: 15
+Name: myFunc.logTest
+Description: 检验acltop log文件名，SA日志CHINA开头，DBExtract要DBX开头
+Category: Validation
+Enabled: Y
+*/
+myFunc.logTest = LAMBDA(toplog_filename,
+    LET(
+        is_sa, REGEXTEST(
+            toplog_filename,
+            "^CHINA.+DBX.+$"
+        ),
+        is_dbx, REGEXTEST(
+            toplog_filename,
+            "^DBX.+$"
+        ),
+        IF(
+            OR(is_sa, is_dbx),
+            N(
+                REGEXTEST(
+                    TEXTAFTER(
+                        toplog_filename,
+                        "DBX_"
+                    ),
+                    "^[0-9]{8}J?_[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}.+$"
+                )
+            ),
+            -1
+        )
+    )
+);
+
+/*
+No: 16
+Name: myFunc.ifEmpty
+Description: 检验单元格是否为空，空返回空，否则返回表达式内容，避免XLOOKUP返回0
+Category: Utility
+Enabled: Y
+*/
+myFunc.ifEmpty = LAMBDA(ifEmptyCell, expression,
+    IF(ifEmptyCell <> "", expression, "")
+);
+
+/*
+No: 17
+Name: myFunc.getFilename
+Description: 获取当前excel文件名
+Category: File
+Enabled: Y
+*/
+myFunc.getFilename = LAMBDA(
+    LET(
+        pathstr, CELL("filename"),
+        REGEXEXTRACT(
+            pathstr,
+            "(?<=\[).*(?=\.)"
+        )
+    )
+);
+
+/*
+No: 18
+Name: myFunc.strHash
+Description: 获取字符串的伪hash值，默认9位
+Category: Text
+Enabled: Y
+*/
+myFunc.strHash = LAMBDA(text, [length_default9],
+    LET(
+        hashLength, IF(
+            ISOMITTED(length_default9),
+            9,
+            length_default9
+        ),
+        chars, MID(
+            text,
+            SEQUENCE(LEN(text)),
+            1
+        ),
+        unicodes, UNICODE(chars),
+        hashSum, 0,
+        iterator, SEQUENCE(LEN(text)),
+        rollingHash, REDUCE(
+            0,
+            iterator,
+            LAMBDA(acc, i,
+                MOD(
+                    MOD(
+                        acc * 31,
+                        POWER(
+                            10,
+                            hashLength
+                        )
+                    ) +
+                        UNICODE(
+                            MID(text, i, 1)
+                        ),
+                    POWER(10, hashLength)
+                )
+            )
+        ),
+        numericHash, MOD(
+            rollingHash,
+            POWER(10, hashLength)
+        ),
+        numericString, TEXT(
+            numericHash,
+            REPT("0", hashLength)
+        ),
+        "H" & numericString
+    )
+);
+
+/*
+No: 19
+Name: myFunc.crossjoin
+Description: 计算两个数组的迪卡尔积，合并成字符列表
+Category: Array
+Enabled: Y
+*/
+myFunc.crossjoin = LAMBDA(varr1, varr2, [seprator],
+    LET(
+        sep, IF(
+            ISOMITTED(seprator),
+            " - ",
+            seprator
+        ),
+        TOCOL(
+            varr1 & sep & TRANSPOSE(varr2),
+            ,
+            FALSE
+        )
+    )
+);
+
+/*
+No: 20
+Name: myFunc.NormalizeValue
+Description: 均一化公式，1正向0反向
+Category: Math
+Enabled: Y
+*/
+myFunc.NormalizeValue = LAMBDA(arr, target, [Default_1_1Pos0Neg],
+    LET(
+        dir, IF(
+            ISOMITTED(Default_1_1Pos0Neg),
+            1,
+            Default_1_1Pos0Neg
+        ),
+        minVal, MIN(arr),
+        maxVal, MAX(arr),
+        normalizedTarget, IF(
+            minVal = maxVal,
+            NA(),
+            SWITCH(
+                TRUE(),
+                ISBLANK(target), "",
+                dir = 0, (
+                    maxVal - target
+                ) / (maxVal - minVal),
+                dir = 1, (
+                    target - minVal
+                ) / (maxVal - minVal),
+                NA()
+            )
+        ),
+        normalizedTarget
+    )
+);
+
+/*
+No: 21
+Name: myFunc.restr
+Description: 把目标字符数组合并成正则字符串，1精确 0模糊
+Category: Regex
+Enabled: Y
+*/
+myFunc.restr = LAMBDA(arr, [mode],
+    LET(
+        m, IF(ISOMITTED(mode), 1, mode),
+        a, TOCOL(arr, 1),
+        b, FILTER(TRIM(a), TRIM(a) <> ""),
+        c, IF(m = 0, ".*" & b, b),
+        "(" & TEXTJOIN("|", TRUE, c) & ")"
+    )
+);
+
+/*
+No: 22
+Name: myFunc.RegexFilter
+Description: 正则筛选一个矩阵，支持ANY/ALL/CONCAT模式
+Category: Regex
+Enabled: Y
+*/
+myFunc.RegexFilter = LAMBDA(
+    arr,
+    pattern,
+    [ignore_case],
+    [empty_fallback],
+    [match_mode],
+    [concat_delim],
+    LET(
+        a, arr,
+        ic, IF(
+            ISOMITTED(ignore_case),
+            1,
+            ignore_case
+        ),
+        fb, IF(
+            ISOMITTED(empty_fallback),
+            "null",
+            empty_fallback
+        ),
+        mm, IF(
+            ISOMITTED(match_mode),
+            "ANY",
+            UPPER(match_mode)
+        ),
+        delim, IF(
+            ISOMITTED(concat_delim),
+            " ",
+            concat_delim
+        ),
+        include, IF(
+            COLUMNS(a) = 1,
+            REGEXTEST(a & "", pattern, ic),
+            BYROW(
+                a,
+                LAMBDA(r,
+                    SWITCH(
+                        mm,
+                        "ANY", OR(
+                            BYCOL(
+                                r,
+                                LAMBDA(c,
+                                    REGEXTEST(
+                                        c &
+                                            "",
+                                        pattern,
+                                        ic
+                                    )
+                                )
+                            )
+                        ),
+                        "ALL", AND(
+                            BYCOL(
+                                r,
+                                LAMBDA(c,
+                                    REGEXTEST(
+                                        c &
+                                            "",
+                                        pattern,
+                                        ic
+                                    )
+                                )
+                            )
+                        ),
+                        "CONCAT", REGEXTEST(
+                            TEXTJOIN(
+                                delim,
+                                TRUE,
+                                r
+                            ),
+                            pattern,
+                            ic
+                        ),
+                        OR(
+                            BYCOL(
+                                r,
+                                LAMBDA(c,
+                                    REGEXTEST(
+                                        c &
+                                            "",
+                                        pattern,
+                                        ic
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        ),
+        IFERROR(FILTER(a, include), fb)
+    )
+);
+
+/*
+No: 23
+Name: myFunc.Calendar
+Description: 接收开始日期与完成日期两个参数，生成完整日历表
+Category: Calenar
+Enabled: Y
+*/
+myFunc.Calendar = LAMBDA(startDate, endDate,
+    IF(
+        startDate > endDate,
+        "开始日期不能晚于结束日期",
+        LET(
+            dates, SEQUENCE(endDate - startDate + 1, , startDate, 1),
+            VSTACK(
+                {
+                    "Date",
+                    "Year",
+                    "Quarter",
+                    "yQuarter",
+                    "Month",
+                    "YearMonth",
+                    "yMonth",
+                    "Day",
+                    "WeekdayNo",
+                    "WeekdayName",
+                    "WeekStart",
+                    "WeekEnd",
+                    "IsWeekend",
+                    "MonthStart",
+                    "MonthEnd"
+                },
+                HSTACK(
+                    dates,
+                    YEAR(dates),
+                    "Q" & ROUNDUP(MONTH(dates) / 3, 0),
+                    YEAR(dates) & "Q" & ROUNDUP(MONTH(dates) / 3, 0),
+                    MONTH(dates),
+                    TEXT(dates, "yyyy-mm"),
+                    TEXT(dates, "yymm"),
+                    DAY(dates),
+                    WEEKDAY(dates, 2),
+                    TEXT(dates, "aaa"),
+                    dates - WEEKDAY(dates, 2) + 1,
+                    dates - WEEKDAY(dates, 2) + 7,
+                    IF(WEEKDAY(dates, 2) > 5, "Yes", "No"),
+                    EOMONTH(dates, -1) + 1,
+                    EOMONTH(dates, 0)
+                )
+            )
+        )
+    )
+);
