@@ -818,12 +818,12 @@ myFunc.unpivot = LAMBDA(table, col_names, [unpivot_selected], [attribute_name], 
 
 /*
 No: 25
-Name: myFunc.cartesian
+Name: myFunc.crossjoinArr
 Description: 真正的交叉连接(笛卡尔积)。参数1/2为两个数组或表格(按行配对)，返回参数1每行与参数2每行两两组合的矩阵(参数1为外层循环)，列数=两者列数之和；参数3默认FALSE，TRUE时把首行视为表头并合并输出。空值返回空白而非0。一维列表请竖向排列
 Category: Table
 Enabled: Y
 */
-myFunc.cartesian = LAMBDA(array1, array2, [has_headers],
+myFunc.crossjoinArr = LAMBDA(array1, array2, [has_headers],
     LET(
         hdr, IF(ISOMITTED(has_headers), FALSE, has_headers),
         data1, IF(hdr, DROP(array1, 1), array1),
