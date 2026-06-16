@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# VBA / text sources: checked out with Windows (CRLF) line endings.
+*.bas text eol=crlf
+*.txt text eol=crlf
