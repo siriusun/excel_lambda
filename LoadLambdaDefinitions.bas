@@ -2,7 +2,8 @@ Attribute VB_Name = "modLambdaLoader"
 Option Explicit
 
 ' Silent loader for Lambda definitions.
-' Fixed source file: C:\Users\siriu\LambdaDefinitions.txt
+' Source resolution: try the local file first; if it is missing, fall back to
+' the raw text of LambdaDefinitions.txt on GitHub.
 ' Expected format:
 ' /* metadata comments */
 ' function.name = LAMBDA(...);
@@ -11,15 +12,18 @@ Option Explicit
 ' - No file picker
 ' - No prompts
 ' - No log worksheet
-' - Silently exits if the source file does not exist or no definitions are found
+' - Silently exits if neither source is available or no definitions are found
 ' - Existing same-name workbook names are overwritten
 
-' Source file path. Change here if the definitions file is stored elsewhere.
+' Local source path. Preferred when present. Change here if the file moves.
 Private Const LAMBDA_SOURCE_PATH As String = "D:\05_Coding test\excel_lambda\LambdaDefinitions.txt"
 
-Public Sub LoadLambdaDefinitionsFromFile()
+' Fallback source URL (used only when the local file is missing).
+Private Const LAMBDA_SOURCE_URL As String = _
+    "https://raw.githubusercontent.com/siriusun/excel_lambda/main/LambdaDefinitions.txt"
 
-    Dim filePath As String
+Public Sub LoadLambdaDefinitions()
+
     Dim txt As String
     Dim defs As Collection
     Dim item As Variant
@@ -30,11 +34,16 @@ Public Sub LoadLambdaDefinitionsFromFile()
     On Error GoTo CleanExit
 
     Set wb = ActiveWorkbook
-    filePath = LAMBDA_SOURCE_PATH
 
-    If Dir(filePath) = "" Then GoTo CleanExit
+    ' Prefer the local copy; fall back to GitHub if it is not found.
+    If Dir(LAMBDA_SOURCE_PATH) <> "" Then
+        txt = ReadTextFileUtf8(LAMBDA_SOURCE_PATH)
+    Else
+        txt = FetchTextFromUrl(LAMBDA_SOURCE_URL)
+    End If
 
-    txt = ReadTextFileUtf8(filePath)
+    If Len(txt) = 0 Then GoTo CleanExit
+
     txt = HtmlDecodeBasic(txt)
     txt = RemoveBlockComments(txt)
 
@@ -87,6 +96,33 @@ Private Function ReadTextFileUtf8(ByVal filePath As String) As String
         ReadTextFileUtf8 = .ReadText
         .Close
     End With
+
+End Function
+
+' Synchronous GET via late-bound MSXML2.XMLHTTP.
+' Returns the response body decoded as UTF-8. Empty string on any failure
+' (network error, non-200 status, empty body) so callers can silently skip.
+Private Function FetchTextFromUrl(ByVal url As String) As String
+
+    Dim http As Object
+    Dim body As String
+
+    On Error GoTo Failed
+
+    Set http = CreateObject("MSXML2.XMLHTTP")
+
+    http.Open "GET", url, False
+    http.setRequestHeader "Accept", "text/plain"
+    http.send
+
+    If http.Status <> 200 Then GoTo Failed
+    If LenB(http.responseText) = 0 Then GoTo Failed
+
+    FetchTextFromUrl = http.responseText
+    Exit Function
+
+Failed:
+    FetchTextFromUrl = ""
 
 End Function
 
