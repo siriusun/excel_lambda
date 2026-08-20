@@ -851,3 +851,62 @@ myFunc.crossjoinArr = LAMBDA(array1, array2, [has_headers],
         )
     )
 );
+
+/*
+No: 26
+Name: myFunc.Coalesce
+Description: 获取第一个非空值，排除掉空字符串、错误、空白；可以接受多个参数，也可以接受一个数组
+Category: Array
+Enabled: Y
+*/
+myFunc.Coalesce = LAMBDA(a,[b],[c],[d],[e],[f],
+    LET(
+        arr,
+            TOCOL(
+                VSTACK(
+                    a,
+                    IF(ISOMITTED(b),"",b),
+                    IF(ISOMITTED(c),"",c),
+                    IF(ISOMITTED(d),"",d),
+                    IF(ISOMITTED(e),"",e),
+                    IF(ISOMITTED(f),"",f)
+                ),
+                1
+            ),
+        valid,
+            FILTER(
+                arr,
+                IFERROR((arr<>"")*(NOT(ISBLANK(arr))),FALSE)
+            ),
+        IFERROR(INDEX(valid,1),"")
+    )
+);
+
+/*
+No: 27
+Name: myFunc.RandomUniqueInts
+Description: 获取指定区间内，固定数量的不重复随机数
+Category: Array
+Enabled: Y
+*/
+myFunc.RandomUniqueInts = LAMBDA(minNum,maxNum,qty,
+    LET(
+        total,maxNum-minNum+1,
+        numbers,SEQUENCE(total,,minNum),
+        IF(
+            OR(
+                minNum>maxNum,
+                minNum<>INT(minNum),
+                maxNum<>INT(maxNum),
+                qty<>INT(qty),
+                qty<1,
+                qty>total
+            ),
+            "参数无效：请检查范围和抽取数量",
+            TAKE(
+                SORTBY(numbers,RANDARRAY(total)),
+                qty
+            )
+        )
+    )
+)
