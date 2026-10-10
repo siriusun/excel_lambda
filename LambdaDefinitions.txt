@@ -871,14 +871,9 @@ myFunc.Coalesce = LAMBDA(a,[b],[c],[d],[e],[f],
                     IF(ISOMITTED(e),"",e),
                     IF(ISOMITTED(f),"",f)
                 ),
-                1
+                3
             ),
-        valid,
-            FILTER(
-                arr,
-                IFERROR((arr<>"")*(NOT(ISBLANK(arr))),FALSE)
-            ),
-        IFERROR(INDEX(valid,1),"")
+        XLOOKUP(TRUE,arr<>"",arr,"")
     )
 );
 
