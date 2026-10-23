@@ -908,12 +908,12 @@ myFunc.RandomUniqueInts = LAMBDA(minNum,maxNum,qty,
 
 /*
 No: 28
-Name: myFunc.Growth
+Name: myFunc.Growth_Rate
 Description: 计算增长率。可传两个参数(期初,期末)，也可只框选一个区域：2个数返回1个增长率，超过2个数按相邻两两返回增长率数组，1个数返回空
 Category: Array
 Enabled: Y
 */
-myFunc.Growth = LAMBDA(before,[after],
+myFunc.Growth_Rate = LAMBDA(before,[after],
     IF(
         ISOMITTED(after),
         LET(
