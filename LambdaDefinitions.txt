@@ -905,3 +905,17 @@ myFunc.RandomUniqueInts = LAMBDA(minNum,maxNum,qty,
         )
     )
 )
+
+/*
+No: 28
+Name: myFunc.Growth
+Description: 计算两个数字的增长率
+Category: Array
+Enabled: Y
+*/
+myFunc.Growth = LAMBDA(before,after,
+    IFERROR(
+        (after-before)/before,
+        ""
+    )
+)
